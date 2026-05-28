@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NotesPro Cosmic - Aplikasi Catatan Masa Depan</title>
+    <style>
+        :root {
+            --bg-body: #f8f9fa;
+            --bg-card: #ffffff;
+            --text-main: #212529;
+            --text-muted: #6c757d;
+            --border-color: #dee2e6;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            
+            /* Dynamic Accent Colors (Default Indigo) */
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            
+            --danger: #ef4444;
+            --success: #10b981;
+            --warning: #f59e0b;
+            
+            /* Note Backgrounds Light */
+            --note-default: #ffffff;
+            --note-red: #fee2e2;
+            --note-blue: #e0f2fe;
+            --note-green: #dcfce7;
+            --note-yellow: #fef9c3;
+        }
+
+        [data-theme="dark"] {
+            --bg-body: #0f172a;
+            --bg-card: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+
+            /* Note Backgrounds Dark */
+            --note-default: #1e293b;
+            --note-red: #7f1d1d;
+            --note-blue: #0c4a6e;
+            --note-green: #064e3b;
+            --note-yellow: #713f12;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', system-ui, sans-serif; }
+        body { background-color: var(--bg-body); color: var(--text-main); transition: all 0.3s ease; padding: 30px 15px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap: wrap; gap: 15px; }
+        .logo-area { display: flex; align-items: center; gap: 10px; font-size: 24px; font-weight: 800; color: var(--primary); text-shadow: 0 0 10px rgba(79, 70, 229, 0.2); }
+        .action-btns { display: flex; gap: 10px; align-items: center; }
+        
+        button { padding: 10px 16px; border: none; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px; transition: all 0.2s; background: var(--border-color); color: var(--text-main); }
+        button:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { box-shadow: 0 0 12px var(--primary); }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-danger:hover { box-shadow: 0 0 12px var(--danger); }
+        .btn-success { background: var(--success); color: white; }
+        .btn-success:hover { box-shadow: 0 0 12px var(--success); }
+        .btn-warning { background: var(--warning); color: black; }
+        .btn-warning:hover { box-shadow: 0 0 12px var(--warning); }
+        .btn-icon { padding: 10px; border-radius: 8px; }
+        svg { width: 18px; height: 18px; fill: currentColor; display: inline-block; vertical-align: middle; }
+
+        /* Custom Accent Changer Style */
+        .accent-picker-container { display: flex; align-items: center; gap: 8px; background: var(--bg-card); padding: 6px 12px; border-radius: 20px; border: 1px solid var(--border-color); box-shadow: var(--shadow); }
+        .accent-dot { width: 16px; height: 16px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: 0.2s; }
+        .accent-dot.active { border-color: var(--text-main); transform: scale(1.2); box-shadow: 0 0 8px var(--primary); }
+
+        .creator-card { background: var(--bg-card); border: 1px solid var(--border-color); padding: 20px; border-radius: 14px; box-shadow: var(--shadow); margin-bottom: 25px; }
+        .input-title { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 12px; background: transparent; color: var(--text-main); font-size: 16px; font-weight: 600; outline: none; }
+        .input-title:focus { border-color: var(--primary); box-shadow: 0 0 8px rgba(79, 70, 229, 0.2); }
+        .textarea-container { position: relative; width: 100%; margin-bottom: 12px; }
+        .textarea-content { width: 100%; padding: 12px; padding-right: 45px; border: 1px solid var(--border-color); border-radius: 8px; background: transparent; color: var(--text-main); font-size: 14px; min-height: 120px; resize: vertical; outline: none; }
+        .textarea-content:focus { border-color: var(--primary); box-shadow: 0 0 8px rgba(79, 70, 229, 0.2); }
+        
+        /* Voice Mic Button */
+        .btn-mic { position: absolute; right: 12px; top: 12px; background: transparent; border: none; padding: 6px; color: var(--text-muted); cursor: pointer; border-radius: 50%; }
+        .btn-mic:hover { color: var(--primary); background: rgba(0,0,0,0.05); }
+        .btn-mic.listening { color: var(--danger); animation: pulse 1.5s infinite; filter: drop-shadow(0 0 6px var(--danger)); }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .form-meta { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 15px; align-items: center; }
+        select, input[type="text"], input[type="password"] { padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-main); font-size: 14px; outline: none; -webkit-appearance: none; appearance: none; }
+        select { padding-right: 28px; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='gray'><path d='M7 10l5 5 5-5z'/></svg>"); background-repeat: no-repeat; background-position: right 8px center; background-size: 16px; }
+        select:focus, input:focus { border-color: var(--primary); }
+        
+        .color-picker { display: flex; gap: 6px; align-items: center; }
+        .color-dot { width: 22px; height: 22px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: 0.2s; }
+        .color-dot.active { border-color: var(--primary); transform: scale(1.1); box-shadow: 0 0 6px var(--primary); }
+
+        .controls-bar { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 25px; align-items: center; justify-content: space-between; }
+        .search-box { display: flex; align-items: center; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding-left: 10px; flex: 1; min-width: 200px; }
+        .search-box input { border: none; width: 100%; padding: 10px; background: transparent; outline: none; color: var(--text-main); }
+
+        /* Notes Display Grid */
+        .notes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .note-card { background: var(--bg-card); border: 1px solid var(--border-color); padding: 18px; border-radius: 12px; box-shadow: var(--shadow); position: relative; display: flex; flex-direction: column; justify-content: space-between; min-height: 180px; transition: transform 0.2s; }
+        .note-card:hover { transform: translateY(-3px); }
+        .note-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; gap: 10px; }
+        .note-title { font-weight: 700; font-size: 16px; word-break: break-word; }
+        .note-body { font-size: 14px; color: var(--text-main); margin-bottom: 15px; white-space: pre-wrap; word-break: break-word; flex-grow: 1; }
+        
+        /* Todo checklist styling inside note */
+        .todo-item { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; font-size: 14px; }
+        .todo-checkbox { width: 16px; height: 16px; cursor: pointer; -webkit-appearance: checkbox; appearance: checkbox; }
+        .todo-text.completed { text-decoration: line-through; color: var(--text-muted); opacity: 0.6; }
+
+        .note-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 10px; font-size: 12px; color: var(--text-muted); }
+        .badge { padding: 3px 8px; border-radius: 4px; font-weight: bold; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .badge-high { background: var(--danger); color: white; }
+        .badge-med { background: var(--warning); color: black; }
+        .badge-low { background: var(--success); color: white; }
+        
+        /* Vault and Dynamic Box Styles */
+        .vault-box { background: var(--bg-card); border: 2px dashed var(--warning); padding: 25px; border-radius: 14px; text-align: center; margin-bottom: 25px; box-shadow: var(--shadow); }
+        .hidden-section { display: none; }
+        .section-title { margin: 30px 0 15px 0; font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 10px; border-bottom: 2px solid var(--border-color); padding-bottom: 8px; }
+        .counter { font-size: 12px; color: var(--text-muted); text-align: right; margin-top: -8px; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div class="logo-area">
+            <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+            NotesPro Cosmic
+        </div>
+        
+        <div class="accent-picker-container" title="Ubah Warna Aksen Aplikasi">
+            <span style="font-size: 11px; font-weight: bold; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Tema:</span>
+            <div class="accent-dot" style="background: #4f46e5;" onclick="changeAccent('#4f46e5', '#4338ca', this)"></div>
+            <div class="accent-dot" style="background: #10b981;" onclick="changeAccent('#10b981', '#059669', this)"></div>
+            <div class="accent-dot" style="background: #f43f5e;" onclick="changeAccent('#f43f5e', '#e11d48', this)"></div>
+            <div class="accent-dot" style="background: #f59e0b;" onclick="changeAccent('#f59e0b', '#d97706', this)"></div>
+            <div class="accent-dot" style="background: #0284c7;" onclick="changeAccent('#0284c7', '#0369a1', this)"></div>
+        </div>
+
+        <div class="action-btns">
+            <button class="btn-icon" onclick="exportNotes()" title="Ekspor Data JSON">
+                <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
+            </button>
+            <button class="btn-icon" onclick="triggerImport()" title="Impor Data JSON">
+                <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
+            </button>
+            <input type="file" id="import-file" style="display:none" onchange="importNotes(event)">
+            <button class="btn-icon" onclick="toggleTheme()" title="Ubah Mode Gelap/Terang">
+                <svg viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/></svg>
+            </button>
+        </div>
+    </header>
+
+    <div class="creator-card">
+        <input type="text" id="note-title" class="input-title" placeholder="Judul Catatan...">
+        
+        <div class="textarea-container">
+            <textarea id="note-content" class="textarea-content" placeholder="Tulis catatan atau buat daftar tugas di sini..." oninput="updateCounter()"></textarea>
+            <button id="mic-btn" class="btn-mic" onclick="toggleSpeech()" title="Dikte lewat Suara">
+                <svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/></svg>
+            </button>
+        </div>
+        
+        <div class="counter" id="text-counter">0 Karakter | 0 Kata</div>
+        
+        <div class="form-meta">
+            <select id="note-mode" onchange="adjustPlaceholder()">
+                <option value="text">Mode Teks Biasa</option>
+                <option value="todo">Mode Daftar Tugas (To-Do)</option>
+            </select>
+            
+            <select id="note-category">
+                <option value="Umum">Umum</option>
+                <option value="Kerja">Kerja</option>
+                <option value="Pribadi">Pribadi</option>
+                <option value="Ide">Ide</option>
+            </select>
+            
+            <select id="note-priority">
+                <option value="low">Rendah</option>
+                <option value="medium">Sedang</option>
+                <option value="high">Tinggi</option>
+            </select>
+
+            <div class="color-picker">
+                <div class="color-dot active" style="background: #ffffff; border: 1px solid #ccc;" onclick="selectColor(this, 'default')"></div>
+                <div class="color-dot" style="background: #fee2e2;" onclick="selectColor(this, 'red')"></div>
+                <div class="color-dot" style="background: #e0f2fe;" onclick="selectColor(this, 'blue')"></div>
+                <div class="color-dot" style="background: #dcfce7;" onclick="selectColor(this, 'green')"></div>
+                <div class="color-dot" style="background: #fef9c3;" onclick="selectColor(this, 'yellow')"></div>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <button class="btn-primary" onclick="addNote(false)">
+                <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg> Simpan Publik
+            </button>
+            <button class="btn-warning" onclick="addNote(true)">
+                <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg> Simpan Rahasia
+            </button>
+        </div>
+    </div>
+
+    <div class="controls-bar">
+        <div class="search-box">
+            <svg viewBox="0 0 24 24" style="color: var(--text-muted)"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+            <input type="text" id="search-input" placeholder="Cari catatan..." oninput="renderNotes()">
+        </div>
+        <select id="filter-category" onchange="renderNotes()">
+            <option value="all">Semua Kategori</option>
+            <option value="Umum">Umum</option>
+            <option value="Kerja">Kerja</option>
+            <option value="Pribadi">Pribadi</option>
+            <option value="Ide">Ide</option>
+        </select>
+    </div>
+
+    <div class="section-title">
+        <svg viewBox="0 0 24 24"><path d="M16 12H8v2h8v-2zm0-4H8v2h8V8zm4-4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V6h16v12z"/></svg>
+        Catatan Utama
+    </div>
+    <div id="public-notes-grid" class="notes-grid"></div>
+
+    <div class="vault-box" id="vault-gate">
+        <div id="vault-setup-title" style="font-size: 18px; font-weight: bold; margin-bottom: 12px; display: inline-flex; align-items: center; gap: 8px;">
+            <svg viewBox="0 0 24 24" style="color: var(--warning)"><path d="M12 17c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm6-9h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+            <span id="vault-prompt-text">Akses Brankas Rahasia</span>
+        </div>
+        <div style="display: flex; gap: 10px; max-width: 420px; margin: 0 auto; flex-wrap: wrap;" id="vault-input-group">
+            </div>
+    </div>
+
+    <div id="vault-content" class="hidden-section">
+        <div class="section-title" style="color: var(--warning); border-color: var(--warning);">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+            Brankas Rahasia Terbuka
+            <div style="margin-left: auto; display: flex; gap: 8px;">
+                <button style="padding: 4px 8px; font-size: 12px; background: var(--border-color);" onclick="resetVaultPassword()">Ganti Sandi/PIN</button>
+                <button class="btn-danger" style="padding: 4px 8px; font-size: 12px;" onclick="lockVault()">Kunci</button>
+            </div>
+        </div>
+        <div id="secret-notes-grid" class="notes-grid"></div>
+    </div>
+
+    <div class="section-title" style="cursor: pointer;" onclick="toggleSection('trash-section')">
+        <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+        Tong Sampah (Pulihkan Catatan)
+    </div>
+    <div id="trash-section" class="notes-grid hidden-section"></div>
+</div>
+
+<script>
+    let notes = JSON.parse(localStorage.getItem('cosmic_notes')) || [];
+    let isVaultUnlocked = false;
+    let selectedColorName = 'default';
+    let recognition;
+
+    document.addEventListener("DOMContentLoaded", () => {
+        initTheme();
+        initAccent();
+        initVaultUI();
+        renderNotes();
+    });
+
+    function initTheme() {
+        const savedTheme = localStorage.getItem('cosmic_theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+    }
+
+    function toggleTheme() {
+        const curr = document.documentElement.getAttribute('data-theme');
+        const next = curr === 'light' ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('cosmic_theme', next);
+    }
+
+    function initAccent() {
+        const savedAccent = localStorage.getItem('cosmic_accent') || '#4f46e5';
+        const savedHover = localStorage.getItem('cosmic_accent_hover') || '#4338ca';
+        document.documentElement.style.setProperty('--primary', savedAccent);
+        document.documentElement.style.setProperty('--primary-hover', savedHover);
+        
+        document.querySelectorAll('.accent-dot').forEach(dot => {
+            if(dot.style.backgroundColor === savedAccent || (savedAccent === '#4f46e5' && dot.style.backgroundColor.includes('85'))) {
+                dot.classList.add('active');
+            }
+        });
+    }
+
+    function changeAccent(mainColor, hoverColor, element) {
+        document.querySelectorAll('.accent-dot').forEach(dot => dot.classList.remove('active'));
+        element.classList.add('active');
+        document.documentElement.style.setProperty('--primary', mainColor);
+        document.documentElement.style.setProperty('--primary-hover', hoverColor);
+        localStorage.setItem('cosmic_accent', mainColor);
+        localStorage.setItem('cosmic_accent_hover', hoverColor);
+    }
+
+    function selectColor(element, colorName) {
+        document.querySelectorAll('.color-dot').forEach(dot => dot.classList.remove('active'));
+        element.classList.add('active');
+        selectedColorName = colorName;
+    }
+
+    function adjustPlaceholder() {
+        const mode = document.getElementById('note-mode').value;
+        const textarea = document.getElementById('note-content');
+        if(mode === 'todo') {
+            textarea.placeholder = "Masukkan daftar tugas Anda, pisahkan tiap tugas dengan enter/baris baru. Contoh:\nBeli susu\nBelajar coding\nOlahraga sore";
+        } else {
+            textarea.placeholder = "Tulis sesuatu yang hebat di sini...";
+        }
+    }
+
+    function updateCounter() {
+        const text = document.getElementById('note-content').value;
+        document.getElementById('text-counter').innerText = `${text.length} Karakter | ${text.trim() === "" ? 0 : text.trim().split(/\s+/).length} Kata`;
+    }
+
+    function toggleSection(id) {
+        document.getElementById(id).classList.toggle('hidden-section');
+    }
+
+    // --- SETUP UI VAULT TANPA EMOJI ---
+    function initVaultUI() {
+        const passwordGroup = document.getElementById('vault-input-group');
+        const promptText = document.getElementById('vault-prompt-text');
+        const savedPIN = localStorage.getItem('cosmic_vault_pin');
+
+        if (!savedPIN) {
+            promptText.innerText = "Atur Kata Sandi/PIN Brankas Baru Anda";
+            passwordGroup.innerHTML = `
+                <input type="password" id="new-vault-pin" placeholder="Buat PIN atau Kata Sandi bebas..." style="flex:1;">
+                <button class="btn-success" onclick="setupNewPIN()">Simpan Sandi</button>
+            `;
+        } else {
+            promptText.innerText = "Masukkan Kata Sandi Brankas Rahasia";
+            passwordGroup.innerHTML = `
+                <input type="password" id="input-vault-pin" placeholder="Masukkan Sandi Anda..." style="flex:1;">
+                <button class="btn-primary" style="background: var(--warning); color: black;" onclick="verifyPIN()">Buka</button>
+            `;
+        }
+    }
+
+    function setupNewPIN() {
+        const pinValue = document.getElementById('new-vault-pin').value.trim();
+        if (pinValue.length < 3) {
+            alert("Sandi terlalu pendek! Buat minimal 3 karakter.");
+            return;
+        }
+        localStorage.setItem('cosmic_vault_pin', pinValue);
+        alert("Sandi Brankas Berhasil Dibuat!");
+        initVaultUI();
+    }
+
+    function verifyPIN() {
+        const inputPIN = document.getElementById('input-vault-pin').value;
+        const savedPIN = localStorage.getItem('cosmic_vault_pin');
+        if (inputPIN === savedPIN) {
+            isVaultUnlocked = true;
+            document.getElementById('vault-gate').classList.add('hidden-section');
+            document.getElementById('vault-content').classList.remove('hidden-section');
+            renderNotes();
+        } else {
+            alert("Sandi Salah! Silakan coba lagi.");
+        }
+    }
+
+    function lockVault() {
+        isVaultUnlocked = false;
+        document.getElementById('vault-gate').classList.remove('hidden-section');
+        document.getElementById('vault-content').classList.add('hidden-section');
+        initVaultUI();
+    }
+
+    function resetVaultPassword() {
+        if(confirm("Apakah Anda yakin ingin mengubah kata sandi saat ini?")) {
+            localStorage.removeItem('cosmic_vault_pin');
+            lockVault();
+        }
+    }
+
+    // --- VOICE TO TEXT LOGIC ---
+    function toggleSpeech() {
+        window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!window.SpeechRecognition) {
+            alert("Browser Anda tidak mendukung fitur Dikte Suara. Coba gunakan Google Chrome.");
+            return;
+        }
+        const micBtn = document.getElementById('mic-btn');
+        if (micBtn.classList.contains('listening')) {
+            recognition.stop();
+            return;
+        }
+        recognition = new SpeechRecognition();
+        recognition.lang = 'id-ID'; 
+        recognition.interimResults = false;
+        micBtn.classList.add('listening');
+
+        recognition.addEventListener('result', e => {
+            const transcript = e.results[0][0].transcript;
+            const textarea = document.getElementById('note-content');
+            textarea.value += (textarea.value ? " " : "") + transcript;
+            updateCounter();
+        });
+        recognition.addEventListener('end', () => { micBtn.classList.remove('listening'); });
+        recognition.addEventListener('error', () => { micBtn.classList.remove('listening'); });
+        recognition.start();
+    }
+
+    // --- CRUD SYSTEM ---
+    function addNote(isSecret) {
+        const titleInput = document.getElementById('note-title');
+        const contentInput = document.getElementById('note-content');
+        const modeSelect = document.getElementById('note-mode').value;
+        const categorySelect = document.getElementById('note-category').value;
+        const prioritySelect = document.getElementById('note-priority').value;
+
+        if (!contentInput.value.trim()) {
+            alert('Isi catatan tidak boleh kosong!');
+            return;
+        }
+
+        let processedContent = contentInput.value.trim();
+        let todoList = [];
+
+        if (modeSelect === 'todo') {
+            const lines = contentInput.value.split('\n');
+            lines.forEach(line => {
+                if(line.trim()) todoList.push({ text: line.trim(), completed: false });
+            });
+            processedContent = "";
+        }
+
+        const newNote = {
+            id: Date.now(),
+            title: titleInput.value.trim() || 'Tanpa Judul',
+            content: processedContent,
+            type: modeSelect,
+            todos: todoList,
+            category: categorySelect,
+            priority: prioritySelect,
+            color: selectedColorName,
+            isSecret: isSecret,
+            isDeleted: false,
+            date: new Date().toLocaleDateString('id-ID', { hour: '2-digit', minute: '2-digit' })
+        };
+
+        notes.push(newNote);
+        saveNotes();
+        titleInput.value = '';
+        contentInput.value = '';
+        updateCounter();
+        renderNotes();
+    }
+
+    function moveNoteToTrash(id) {
+        const note = notes.find(n => n.id === id);
+        if (note) { note.isDeleted = true; saveNotes(); renderNotes(); }
+    }
+
+    function restoreNote(id) {
+        const note = notes.find(n => n.id === id);
+        if (note) { note.isDeleted = false; saveNotes(); renderNotes(); }
+    }
+
+    function permanentDeleteNote(id) {
+        if (confirm("Hapus permanen? Catatan tidak akan bisa dipulihkan lagi.")) {
+            notes = notes.filter(n => n.id !== id);
+            saveNotes();
+            renderNotes();
+        }
+    }
+
+    function toggleTodoCheck(noteId, todoIndex) {
+        const note = notes.find(n => n.id === noteId);
+        if (note && note.todos[todoIndex]) {
+            note.todos[todoIndex].completed = !note.todos[todoIndex].completed;
+            saveNotes();
+            renderNotes();
+        }
+    }
+
+    function saveNotes() { localStorage.setItem('cosmic_notes', JSON.stringify(notes)); }
+
+    function renderNotes() {
+        const publicGrid = document.getElementById('public-notes-grid');
+        const secretGrid = document.getElementById('secret-notes-grid');
+        const trashSection = document.getElementById('trash-section');
+        
+        publicGrid.innerHTML = ''; secretGrid.innerHTML = ''; trashSection.innerHTML = '';
+        const searchQuery = document.getElementById('search-input').value.toLowerCase();
+        const filterCat = document.getElementById('filter-category').value;
+        const sortedNotes = [...notes].sort((a, b) => b.id - a.id);
+
+        sortedNotes.forEach(note => {
+            const matchesSearch = note.title.toLowerCase().includes(searchQuery) || 
+                                  note.content.toLowerCase().includes(searchQuery) ||
+                                  (note.todos && note.todos.some(t => t.text.toLowerCase().includes(searchQuery)));
+            const matchesCategory = filterCat === 'all' || note.category === filterCat;
+
+            if(!matchesSearch || !matchesCategory) return;
+
+            const card = document.createElement('div');
+            card.className = 'note-card';
+            card.style.backgroundColor = `var(--note-${note.color})`;
+            
+            let bodyHTML = '';
+            if (note.type === 'todo') {
+                bodyHTML = `<div class="note-body">`;
+                note.todos.forEach((todo, index) => {
+                    bodyHTML += `
+                        <div class="todo-item">
+                            <input type="checkbox" class="todo-checkbox" ${todo.completed ? 'checked' : ''} 
+                                   onclick="toggleTodoCheck(${note.id}, ${index})" ${note.isDeleted ? 'disabled' : ''}>
+                            <span class="todo-text ${todo.completed ? 'completed' : ''}" style="${note.color !== 'default' ? 'color:#111827' : ''}">${todo.text}</span>
+                        </div>`;
+                });
+                bodyHTML += `</div>`;
+            } else {
+                bodyHTML = `<div class="note-body" style="${note.color !== 'default' ? 'color:#1f2937' : ''}">${note.content}</div>`;
+            }
+
+            let actionsHTML = note.isDeleted ? `
+                <button class="btn-icon" style="padding:4px; background:var(--success); color:white;" onclick="restoreNote(${note.id})">
+                    <svg viewBox="0 0 24 24" style="width:14px; height:14px;"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
+                </button>
+                <button class="btn-danger btn-icon" style="padding:4px;" onclick="permanentDeleteNote(${note.id})">
+                    <svg viewBox="0 0 24 24" style="width:14px; height:14px;"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                </button>
+            ` : `
+                <button class="btn-danger btn-icon" style="padding:4px;" onclick="moveNoteToTrash(${note.id})">
+                    <svg viewBox="0 0 24 24" style="width:14px; height:14px;"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                </button>
+            `;
+
+            card.innerHTML = `
+                <div><div class="note-header"><div class="note-title" style="${note.color !== 'default' ? 'color:#111827' : ''}">${note.title}</div></div>${bodyHTML}</div>
+                <div>
+                    <div style="margin-bottom: 8px;"><span class="badge badge-${note.priority}">${note.priority}</span> <span class="badge" style="background:var(--primary); color:white;">${note.category}</span></div>
+                    <div class="note-footer"><span>${note.date}</span><div style="display:flex; gap:5px;">${actionsHTML}</div></div>
+                </div>`;
+
+            if (note.isDeleted) trashSection.appendChild(card);
+            else if (note.isSecret) { if (isVaultUnlocked) secretGrid.appendChild(card); }
+            else publicGrid.appendChild(card);
+        });
+    }
+</script>
+</body>
+</html>
