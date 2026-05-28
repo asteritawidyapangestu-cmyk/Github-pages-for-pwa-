@@ -1,0 +1,17 @@
+{
+  "background_color": "#ffffff",
+  "dir": "ltr",
+  "display": "standalone",
+  "name": "notespro cosmic",
+  "orientation": "any",
+  "scope": "https://asteritawidyapangestu-cmyk.github.io/Github-pages-for-pwa-/",
+  "short_name": "notesprocosmic",
+  "start_url": "https://asteritawidyapangestu-cmyk.github.io/Github-pages-for-pwa-/",
+  "theme_color": "#ffffff",
+  "id": "notesprocosmic",
+  "display_override": [
+    "standalone",
+    "window-controls-overlay"
+  ],
+  "lang": "id"
+}
